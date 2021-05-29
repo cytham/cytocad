@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+
+"""
+CytoCAD
+
+This is the main executable file of the program CytoCAD.
+
+Copyright (C) 2021 Tham Cheng Yong
+
+CytoCAD is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+CytoCAD is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with CytoCAD.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+__author__ = 'CY Tham'
+
+import os
+import sys
+import distutils.spawn
+# import time
+import pysam
+import logging
+from datetime import datetime
+from cytocad.input import input_parser
+
+
+def main():
+    # Parse arguments
+    args = input_parser()
+    file_path = args.input
+    wk_dir = args.dir
+    ref_build = args.build
+    cov_plots = args.add_plots
+    colors = args.colors
+    oformat = args.format
+    interval = args.interval
+    interval_buf = args.buffer
+    rolling = args.rolling
+    penalty = args.penalty
+    scale = args.scale
+    quiet = args.quiet
+    # debug = args.debug
+
+    import cytocad
+
+    # Check for tagore executable
+    if distutils.spawn.find_executable('tagore'):
+        pass
+    else:
+        logging.critical("Error: %s executable is not in PATH, please install tagore" % 'tagore')
+        raise Exception("Error: %s executable is not in PATH, please install tagore" % 'tagore')
+
+    # Check for rsvg-convert executable
+    if distutils.spawn.find_executable('rsvg-convert'):
+        pass
+    else:
+        logging.critical("Error: %s executable is not in PATH, try sudo apt-get install librsvg2-bin" % 'rsvg-convert')
+        raise Exception("Error: %s executable is not in PATH, try sudo apt-get install librsvg2-bin" % 'rsvg-convert')
+
+    # Observe verbosity
+    if quiet:
+        sys.stdout = open(os.devnull, 'w')
+
+    # Setup working directory
+    if not os.path.exists(wk_dir):
+        os.makedirs(wk_dir)
+    if cov_plots:
+        if not os.path.exists(os.path.join(wk_dir, 'fig')):
+            os.makedirs(os.path.join(wk_dir, 'fig'))
+
+    # Check colors
+    if colors is None:
+        colors = ['#a6a6a6', '#990000', '#000099']
+    else:
+        if len(colors) == 3:
+            for i in colors:
+                if not i.startswith('#'):
+                    raise Exception('Error: The hex color %s has an incorrect format' % i)
+        else:
+            raise Exception("""Error: The input of '-c' or '--colors' has to be three hex colors separated by spaces (e.g. 
+                            -c #486fbd #bd5b48 #48bd96""")
+
+    # Setup logging
+
+    # Check BAM file and obtain sample name
+    filename = os.path.basename(file_path)
+    bam_suffix = '.bam'
+    contig_list = []
+    now = datetime.now()
+    now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")
+    print(now_str + ' - CytoCAD started')
+    print(now_str + ' - Assessing BAM file...')
+    if filename.lower().endswith(bam_suffix):
+        save = pysam.set_verbosity(0)  # Suppress BAM index missing warning
+        sam = pysam.AlignmentFile(file_path, "rb")
+        pysam.set_verbosity(save)  # Revert verbosity level
+        try:
+            assert sam.is_bam, "Error: Input BAM file is not a BAM file."
+            sample_name = os.path.basename(file_path).rsplit('.bam', 1)[0]
+            # Get BAM contigs from header
+            header = sam.header.to_dict()
+            for h in header['SQ']:
+                contig_list.append(h['SN'])
+        except AssertionError:
+            logging.critical("Error: Input BAM file is not a BAM file.")
+            raise Exception("Error: Input BAM file is not a BAM file.")
+    else:
+        logging.critical("Error: Input file is not recognised, please ensure file suffix has '.bam'")
+        raise Exception("Error: Input file is not recognised, please ensure file suffix has '.bam'")
+
+    # Define file paths and variables according to reference build
+    data_dir = os.path.join(os.path.dirname(cytocad.__file__), 'data')
+    if ref_build == 'hg38':
+        main_chr_path = os.path.join(data_dir, 'hg38_sizes_main.bed')
+        total_gsize = 3209286105
+    else:
+        raise Exception("Error: Reference genome build %s is not recognised. CytoCAD only supports build hg38." % ref_build)
+
+    # Check if BAM contig names are appropriate
+    for i in contig_list:
+        if not i.startswith('chr'):
+            logging.critical("Error: Contig %s in BAM has unconventional naming, please ensure contig name starts with 'chr'" % i)
+            raise Exception("Error: Contig %s in BAM has unconventional naming, please ensure contig name starts with 'chr'" % i)
+
+    # Create chromosome length dict
+    chrom_len_dict = {}
+    with open(main_chr_path) as f:
+        for line in f:
+            chrm, start, end = line.split('\t')
+            chrom_len_dict[chrm] = end
+
+    from cytocad.bam_coverage import bam_parse
+    from cytocad.depth_limit import ovl_upper
+    from cytocad.change_detection import cad
+    from cytocad.ideogram import tagore_wrapper
+
+    # Create subdata alignment using BAM
+    now = datetime.now()
+    now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")
+    print(now_str + ' - Analyzing BAM file...')
+    subdata, basecov = bam_parse(file_path)
+
+    # Calculate overall depth crudely
+    depth = round(float(basecov) / total_gsize, 2)
+
+    # Calculate upper depth limit (=3*Mean absolute deviation around median above median)
+    upper_cov = ovl_upper(total_gsize, chrom_len_dict, subdata, wk_dir, cov_plots)
+
+    # Peform coverage anomaly detection
+    now = datetime.now()
+    now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")
+    print(now_str + ' - Estimating coverage and CAD...')
+    out, tag = cad(subdata,
+                   depth,
+                   upper_cov,
+                   sample_name,
+                   ref_build=ref_build,
+                   interval=interval,
+                   interval_buf=interval_buf,
+                   rolling_size=rolling,
+                   penalty=penalty,
+                   zygo_scale=scale,
+                   cov_plots=cov_plots,
+                   wk_dir=wk_dir,
+                   colors=colors)
+
+    # tagore wrapper
+    now = datetime.now()
+    now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")
+    print(now_str + ' - Creating chromosome illustraions...')
+    tagore_wrapper(tag, sample_name, wk_dir, ref_build, oformat)
+
+    # Write results to BED file
+    out_path = os.path.join(wk_dir, sample_name + ".CNV.bed")
+    outwrite = open(out_path, 'w')
+    _ = outwrite.write('\n'.join(out))
+    outwrite.close()
+    now = datetime.now()
+    now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")
+    print(now_str + ' - Finished')
+
+
+if __name__ == "__main__":
+    main()

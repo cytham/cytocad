@@ -1,0 +1,4 @@
+include *.txt
+include cytocad/*.c
+recursive-include cytocad/data *.bed
+recursive-include cytocad/data *.p
