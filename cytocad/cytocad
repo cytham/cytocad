@@ -182,7 +182,7 @@ def main():
     # Write results to BED file
     out_path = os.path.join(wk_dir, sample_name + ".CNV.bed")
     outwrite = open(out_path, 'w')
-    _ = outwrite.write('\n'.join(out))
+    _ = outwrite.write('\n'.join(out) + '\n')
     outwrite.close()
     now = datetime.now()
     now_str = now.strftime("[%d/%m/%Y %H:%M:%S]")

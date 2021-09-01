@@ -41,7 +41,7 @@ def cad(
         interval=50000,
         interval_buf=10,
         rolling_size=10,
-        penalty=500,
+        penalty=500,  # 500
         zygo_scale=0.25,
         cov_plots=False,
         wk_dir='./',
@@ -128,6 +128,7 @@ def cad(
             for _ in intersect3:
                 nocov += 1
             chrx_avg = total / (len(set(cov_list)) + nocov)
+            # print('Chrx avg: ' + str(chrx_avg))
         elif chromo == 'chrY':
             total = 0
             nocov = 0
@@ -136,6 +137,7 @@ def cad(
             for _ in intersect3:
                 nocov += 1
             chry_avg = total / (len(set(cov_list)) + nocov)
+            # print('Chry avg: ' + str(chry_avg))
         # For each region falling in filter bed, assign mean coverage
         intersect4 = interval_bed.intersect(filter_bed, wa=True)
         for line in intersect4:
@@ -175,17 +177,24 @@ def cad(
             rolling_mean = df.y.rolling(window=rolling_size).mean()
             signal = np.array(rolling_mean)
             signal[np.isnan(signal)] = mean_cov
-            algo = rpt.KernelCPD(kernel="linear", min_size=2).fit(signal)
+            # Scale coverage for consistent change detection
+            if chromo == 'chrX':
+                signal_scaled = signal/chrx_avg * 8
+            elif chromo == 'chrY':
+                signal_scaled = signal/chry_avg * 8
+            else:
+                signal_scaled = signal/mean_cov * 8
+            algo = rpt.KernelCPD(kernel="linear", min_size=2).fit(signal_scaled)
             result = algo.predict(pen=penalty)
             _span = []
-            if len(result) % 2 != 0:
-                _result = [0] + result
-                for i in range(len(_result) - 1):
-                    _span.append([_result[i], _result[i + 1]])
-            else:
-                _result = [0] + result
-                for i in range(len(_result) - 1):
-                    _span.append([_result[i], _result[i + 1]])
+            # if len(result) % 2 != 0:
+            _result = [0] + result
+            for i in range(len(_result) - 1):
+                _span.append([_result[i], _result[i + 1]])
+            # else:
+            #     _result = [0] + result
+            #     for i in range(len(_result) - 1):
+            #         _span.append([_result[i], _result[i + 1]])
             ideo = {}
             cov = {}
             coord = {}

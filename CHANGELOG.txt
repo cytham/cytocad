@@ -4,5 +4,10 @@ CytoCAD Changelog
 Release Summary:
 
 
-Version 1.0.0 - ?, 2021
+Version 1.0.1 - Sept 1, 2021
+    * Scaled genomic coverage to fix high coverage bug
+    * Extended chr Y end filter region
+
+
+Version 1.0.0 - May 29, 2021
     * Initial release
