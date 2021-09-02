@@ -6,7 +6,11 @@
 [![Conda](https://img.shields.io/conda/v/bioconda/cytocad)](https://anaconda.org/bioconda/cytocad)
 [![Github release](https://img.shields.io/github/v/release/cytham/cytocad?include_prereleases)](../../releases)
 [![PyPI license](https://img.shields.io/pypi/l/cytocad)](./LICENSE.txt)
-  
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/25361260/131828572-bfb57cf8-e9e2-4f8d-b200-5b4b5a5b8181.png" width="500" alt="accessibility text" align='center'>
+</p>
+
 CytoCAD is a bioinformatics tool for the identification of large genomic copy-number variation through coverage anomaly detection
  (CAD) using mapped whole-genome sequencing (WGS) data. It has been tested in low-depth (~8X) Oxford Nanopore WGS long-read
   data. Its output displays chromosome illustrations demarcating regions of copy-number gains (Red) or losses (Blue).
