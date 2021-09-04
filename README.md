@@ -1,6 +1,6 @@
 
 ## CytoCAD - Copy-number variation caller using low-depth whole-genome sequencing data
-[![Build Status](https://travis-ci.org/cytham/cytocad.svg?branch=master)](https://travis-ci.com/cytham/cytocad)
+[![Build Status](https://app.travis-ci.com/cytham/cytocad.svg?branch=master)](https://app.travis-ci.com/github/cytham/cytocad)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/cytocad)](https://pypi.org/project/cytocad/)
 [![PyPI versions](https://img.shields.io/pypi/v/cytocad)](https://pypi.org/project/cytocad/)
 [![Conda](https://img.shields.io/conda/v/bioconda/cytocad)](https://anaconda.org/bioconda/cytocad)
