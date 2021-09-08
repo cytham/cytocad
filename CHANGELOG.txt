@@ -4,6 +4,10 @@ CytoCAD Changelog
 Release Summary:
 
 
+Version 1.0.1 - Sept 8, 2021
+    * Add ruptures in Bioconda recipe
+    
+    
 Version 1.0.1 - Sept 1, 2021
     * Scaled genomic coverage to fix high coverage bug
     * Extended chr Y end filter region
