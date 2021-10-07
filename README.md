@@ -13,10 +13,10 @@
 
 CytoCAD is a bioinformatics tool for the identification of large genomic copy-number variation through coverage anomaly detection
  (CAD) using mapped whole-genome sequencing (WGS) data. It has been tested in low-depth (~8X) Oxford Nanopore WGS long-read
-  data. Its output displays chromosome illustrations demarcating regions of copy-number gains (Red) or losses (Blue). The above illustration shows a loss of one chromosome 7 copy, a gain of one chromosome 21 copy, a partial gain of both chromosome 8 copies, and a loss of one chromosome 17 arm.
+  data. Its output displays chromosome illustrations demarcating regions of copy-number gains (Red) or losses (Blue). The above illustration shows a loss of one chromosome 7 copy, a gain of one chromosome 21 copy, a partial duplication of both chromosome 8 copies, and a loss of one chromosome 17 short arm. It also has two X chromosomes and no Y chromosome, suggesting a female sex.
 
 ### Basic information:
-* Takes as input a mapped whole-genome sequencing BAM file and output a BED file and a chromosome ideogram figure
+* Takes as input a mapped whole-genome sequencing BAM file and output a BED file and a chromosome ideogram-like figure
 * Uses [Ruptures](https://github.com/deepcharles/ruptures) python package for change point detection of read coverage data per
  chromosome 
 * Uses [tagore](https://github.com/jordanlab/tagore) for chromosome ideogram illustrations
