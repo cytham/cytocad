@@ -180,10 +180,13 @@ def cad(
             # Scale coverage for consistent change detection
             if chromo == 'chrX':
                 signal_scaled = signal/chrx_avg * 8
+                signal_plot = signal/chrx_avg
             elif chromo == 'chrY':
                 signal_scaled = signal/chry_avg * 8
+                signal_plot = signal/chry_avg
             else:
                 signal_scaled = signal/mean_cov * 8
+                signal_plot = signal/mean_cov * 2
             algo = rpt.KernelCPD(kernel="linear", min_size=2).fit(signal_scaled)
             result = algo.predict(pen=penalty)
             _span = []
@@ -218,6 +221,7 @@ def cad(
             label = {}
             if chromo == 'chrX':
                 if mean_cov - buf <= chrx_avg:  # XX
+                    signal_plot *= 2
                     for i in cov:
                         if het_loss - buf <= cov[i] < het_loss + buf:
                             label[i] = 'loss-hetero'
@@ -318,18 +322,20 @@ def cad(
                     for i in result_iter:
                         span.append([i, next(result_iter)])
                 ax = fig.add_subplot(2, 4, n)
-                ax.plot(xcoord, signal, label='SMA', color='red', alpha=0.8)
+                ax.plot(xcoord, signal_plot, label='SMA', color='red', alpha=0.8)
                 for p in span:
                     ax.axvspan(region[chromo][p[0] - 1], region[chromo][p[1] - 1], alpha=0.3, color='blue')
                 ax.set_title(chromo)
-                ax.set_ylim(0, upper_cov + 2)
+                ax.set_ylim(0, 5)
+                ax.set_yticks(np.arange(0, 5, 1))
+                ax.yaxis.grid(True)
                 n += 1
         if cov_plots:
             n = 1
             fig.add_subplot(111, frame_on=False)
             plt.tick_params(labelcolor="none", bottom=False, left=False)
             plt.xlabel('Coordinate (MB)')
-            plt.ylabel('Coverage')
+            plt.ylabel('Copy number')
             plt.tight_layout()
             fig_out_path = os.path.join(wk_dir, 'fig', sample_name + '_cov' + str(cycle) + '.svg')
             plt.savefig(fig_out_path,

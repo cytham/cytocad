@@ -4,6 +4,10 @@ CytoCAD Changelog
 Release Summary:
 
 
+Version 1.0.3 - Oct 8, 2021
+    * Changed coverage plot y axis to copy number
+
+
 Version 1.0.2 - Sept 8, 2021
     * Add ruptures in Bioconda recipe
     
