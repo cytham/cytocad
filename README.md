@@ -1,4 +1,6 @@
 
+## CytoCAD is currently a work in progress. Please use the CNV calling subworkflow [here](https://github.com/epi2me-labs/wf-human-variation) instead.
+
 ## CytoCAD - Copy-number variation caller using low-depth whole-genome sequencing data
 [![Build Status](https://app.travis-ci.com/cytham/cytocad.svg?branch=master)](https://app.travis-ci.com/github/cytham/cytocad)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/cytocad)](https://pypi.org/project/cytocad/)
